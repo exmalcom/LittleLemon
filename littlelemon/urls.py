@@ -25,6 +25,7 @@ router.register(r'tables', BookingViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('restaurant.urls')),  # Include the restaurant app's URLs under /api/
     path('restaurant/', include('restaurant.urls')),  # Update URLConf
     path('restaurant/booking/', include(router.urls)),
     path('restaurant/menu/', include('restaurant.urls')),
