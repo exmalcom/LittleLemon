@@ -1,30 +1,23 @@
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase
-from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import User
-from restaurant.models import Menu
+from django.test import TestCase
+from rest_framework.test import APIClient
+from restaurant.models import MenuItem
+from restaurant.serializers import MenuItemSerializer
 
-class MenuViewTest(APITestCase):
+class MenuViewTest(TestCase):
     def setUp(self):
-        # Create a user and obtain a token
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-        self.token = Token.objects.create(user=self.user)
+        # Set up some MenuItems to test
+        self.item1 = MenuItem.objects.create(title="Pizza", price=12.99, inventory=50)
+        self.item2 = MenuItem.objects.create(title="Burger", price=8.99, inventory=30)
+        
+        self.client = APIClient()  # Using the DRF APIClient to send requests
 
-        # Create test menu items
-        Menu.objects.create(title="Pizza", price=12.99, inventory=50)
-        Menu.objects.create(title="Burger", price=8.99, inventory=30)
-
-    def test_get_all_items(self):
-        # Use the correct URL name for the menu items list
-        url = reverse('menu-items')
+    def test_getall(self):
+        # Send a GET request to retrieve the menu items
+        response = self.client.get('/restaurant/menu/')
         
-        # Use the token for authentication
-        response = self.client.get(url, HTTP_AUTHORIZATION='Token ' + self.token.key)
-        items = Menu.objects.all()
+        # Serialize the data manually
+        expected_data = MenuItemSerializer([self.item1, self.item2], many=True).data
         
-        # Check if the response status is OK
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Check if the serialized data matches the expected data
-        self.assertEqual(len(response.data), items.count())
+        # Assert if the response data matches the serialized data
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, expected_data)
